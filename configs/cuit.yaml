@@ -1,0 +1,67 @@
+# CUIT hyperparameters. Any key can be overridden on the command line, e.g. dataset=sports seed=43.
+dataset: beauty
+seed: 42
+data_dir: data/amazon/${dataset}             # preprocessed Amazon 2014 (P5 split) TFRecords
+work_dir: outputs/${dataset}                 # cached sequences, text embeddings, CF labels
+out_dir: outputs/${dataset}/s${seed}         # tokenizer and generator of one seed
+
+embed:                   # frozen text encoder
+  model: google/flan-t5-xl
+  max_length: 128
+  batch_size: 64
+
+cf:                      # CF labels
+  dim: 64
+  layers: 3
+  lr: 1.0e-3
+  reg: 1.0e-4
+  batch_size: 2048
+  patience: 20
+  max_epochs: 1000
+  seed: 42
+  M: 128
+  kmeans_seed: 42
+
+probe:                   # CF probes
+  folds: 5
+  n_splits: 5
+  fold_seed: 0           # split s uses fold_seed + s
+  lambda_grid: [1.0e-4, 1.0e-3, 3.0e-3, 1.0e-2, 3.0e-2, 1.0e-1, 1.0]   # L2 weight of U, chosen by held-out NLL
+  temp_frac: 0.1
+  lbfgs_max_iter: 500
+  lbfgs_history: 20
+
+tok:                     # tokenizer
+  K: 256
+  L_max: 3
+  lam: 1.0               # lambda
+  eps: 0.2               # epsilon: CF information is sufficient when rho~ <= eps
+  delta: 0.05            # items with A_i <= delta start in Ident
+  rounds: 2              # J
+  min_len: 2             # minimum SID length
+  kmeans:                # mini-batch k-means
+    init_buffer: 3072    # k-means++ on this many points
+    batch_size: 2048
+    steps: 8             # update steps after initialization
+
+gen:                     # generator
+  d_model: 128
+  d_ff: 1024
+  heads: 6
+  d_kv: 64
+  enc_layers: 4
+  dec_layers: 4
+  ff_layers: 2           # hidden layers of each feed-forward block
+  dropout: 0.15
+  max_tokens: 120        # input budget (history + target, L_max tokens per item)
+  users_per_batch: 32
+  windows_per_batch: 512 # contiguous sub-sequences sampled per batch of users
+  accumulate: 16
+  lr: 1.0e-3
+  weight_decay: 1.0e-4
+  val_every: 100         # optimizer steps between validations
+  patience: 10
+  max_steps: 20000
+  beam: 10
+  eval_batch_size: 512
+  num_workers: 6

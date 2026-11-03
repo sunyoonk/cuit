@@ -1,0 +1,7 @@
+torch==2.6.0
+transformers==4.47.0
+sentencepiece==0.2.0
+omegaconf==2.3.0
+numpy==2.0.2
+scikit-learn==1.6.1
+gdown==5.2.0
